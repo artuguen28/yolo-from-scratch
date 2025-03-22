@@ -103,12 +103,25 @@ class Yolov1(nn.Module):
         return nn.Sequential(*layers)
 
     def _create_fcs(self, split_size, num_boxes, num_classes):
+        """
+        Creates a fully connected sequential network for object detection.
+
+        Args:
+            split_size (int): The number of grid cells per dimension (S x S).
+            num_boxes (int): The number of bounding boxes per grid cell.
+            num_classes (int): The number of object classes.
+
+        Returns:
+            nn.Sequential: A sequential model with Flatten, Linear, and Dropout layers,
+                        transforming the feature map into final object detection predictions.
+        """
+        
         S, B, C = split_size, num_boxes, num_classes
         return nn.Sequential(
             nn.Flatten(),
             nn.Linear(1024 * S * S, 496), # Original paper this should be 4096,
             nn.Dropout(0.0),
-            nn.Linear(496, S * S * (C + B * 5)), # (S, S, 30) where C+B*5 = 30
+            nn.Linear(496, S * S * (C + B * 5)) # (S, S, 30) where C+B*5 = 30
         )
     
 
@@ -117,6 +130,9 @@ def test(S=7, B=2, C=20):
     model = Yolov1(split_size=S, num_boxes=B, num_classes=C)
     x = torch.randn((2, 3, 448, 448))
     print(model(x).shape)
+
+    # result is torch.Size([2, 1470])
+    # 7 * 7 * 30 = 1470, which represents the last tensor of the yolo
 
 
 if __name__ == "__main__":
